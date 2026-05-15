@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MathQuest</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" onerror="this.remove()">
+<style>
+/* SVG icons replace font icons */
+.svg-icon { display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;flex-shrink:0; }
+.svg-icon svg { display:block; }
+</style>
+<style>
+/* ═══════════ TOKENS ═══════════ */
+:root {
+  --blue:#1CB0F6;   --blue-dk:#0A91D1;  --blue-lo:rgba(28,176,246,.1);
+  --green:#58CC02;  --green-dk:#46A302; --green-lo:rgba(88,204,2,.1);
+  --purple:#A855F7; --purple-dk:#7C3AED;--purple-lo:rgba(168,85,247,.1);
+  --orange:#FF9600; --orange-dk:#CC7800;--orange-lo:rgba(255,150,0,.1);
+  --red:#FF4B4B;    --red-dk:#CC3B3B;
+  --yellow:#FFC800; --yellow-dk:#CC9F00;
+  --pink:#F472B6;   --teal:#14B8A6;     --teal-dk:#0F9488;
+  --white:#FFFFFF;  --bg:#F0F4FF;
+  --text:#1E293B;   --muted:#94A3B8;    --border:#E2E8F0;
+  --sidebar-w:220px; --topbar-h:58px; --bnav-h:66px;
+  --F:'Nunito',sans-serif; --FH:'Fredoka One',cursive;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--F);}
+
+/* ═══════════ ONBOARDING OVERLAY ═══════════ */
+#onboarding{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--white);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.ob-progress{
+  height:5px;background:var(--border);flex-shrink:0;
+}
+.ob-progress-fill{
+  height:100%;background:var(--blue);
+  transition:width .4s ease;border-radius:0 3px 3px 0;
+}
+.ob-screens{
+  flex:1;overflow:hidden;position:relative;
+}
+.ob-screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:32px 24px;
+  opacity:0;transform:translateX(60px);
+  transition:all .35s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;
+  overflow-y:auto;
+}
+.ob-screen.active{opacity:1;transform:translateX(0);pointer-events:all;}
+.ob-screen.out{opacity:0;transform:translateX(-60px);}
+
+/* Welcome screen */
+.ob-mascot{
+  width:110px;height:110px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  border-radius:28px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 0 rgba(10,145,209,.35),0 16px 32px rgba(28,176,246,.2);
+  margin-bottom:28px;font-size:52px;color:#fff;
+  animation:mascotBounce 3s ease-in-out infinite;
+}
+@keyframes mascotBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.ob-title{font-family:var(--FH);font-size:clamp(28px,7vw,42px);text-align:center;margin-bottom:10px;line-height:1.1;}
+.ob-title span{color:var(--blue);}
+.ob-sub{font-size:15px;font-weight:600;color:var(--muted);text-align:center;max-width:300px;line-height:1.6;margin-bottom:36px;}
+
+/* Level select */
+.ob-section-title{font-family:var(--FH);font-size:clamp(20px,5vw,28px);text-align:center;margin-bottom:6px;}
+.ob-section-sub{font-size:14px;font-weight:600;color:var(--muted);text-align:center;margin-bottom:28px;}
+.level-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:400px;}
+.level-card{
+  background:var(--white);border:2.5px solid var(--border);
+  border-radius:20px;padding:22px 16px;
+  text-align:center;cursor:pointer;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 4px 0 rgba(0,0,0,.07);
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.level-card:active{transform:scale(.94);}
+.level-card.selected{border-color:var(--blue);background:var(--blue-lo);box-shadow:0 4px 0 rgba(10,145,209,.2);}
+.level-card.selected .lc-icon{background:var(--blue);color:#fff;}
+.lc-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:var(--bg);margin:0 auto 12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;transition:all .2s;
+}
+.lc-name{font-weight:800;font-size:15px;margin-bottom:3px;}
+.lc-sub{font-size:11px;font-weight:700;color:var(--muted);}
+
+/* Grade select */
+.grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:380px;}
+.grade-btn{
+  background:var(--white);border:2.5px solid var(--border);
+  border-radius:14px;padding:14px 8px;
+  text-align:center;cursor:pointer;
+  font-weight:800;font-size:14px;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 3px 0 rgba(0,0,0,.07);
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.grade-btn:active{transform:scale(.93);}
+.grade-btn.selected{background:var(--blue);border-color:var(--blue-dk);color:#fff;box-shadow:0 3px 0 var(--blue-dk);}
+.grade-btn .gb-grade{font-family:var(--FH);font-size:18px;display:block;}
+.grade-btn .gb-label{font-size:9px;font-weight:700;color:var(--muted);display:block;margin-top:2px;}
+.grade-btn.selected .gb-label{color:rgba(255,255,255,.7);}
+
+/* Goal select */
+.goal-list{display:flex;flex-direction:column;gap:12px;width:100%;max-width:360px;}
+.goal-item{
+  background:var(--white);border:2.5px solid var(--border);
+  border-radius:16px;padding:16px 20px;
+  display:flex;align-items:center;gap:16px;
+  cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 4px 0 rgba(0,0,0,.07);
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.goal-item:active{transform:scale(.97);}
+.goal-item.selected{border-color:var(--green);background:var(--green-lo);box-shadow:0 4px 0 rgba(70,163,2,.2);}
+.goal-item.selected .gi-icon{background:var(--green);color:#fff;}
+.gi-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--bg);display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;transition:all .2s;
+}
+.gi-info{flex:1;}
+.gi-label{font-weight:800;font-size:15px;}
+.gi-sub{font-size:12px;font-weight:600;color:var(--muted);}
+.gi-badge{font-size:11px;font-weight:900;padding:2px 8px;border-radius:8px;}
+
+/* Name screen */
+.ob-input-wrap{width:100%;max-width:320px;margin-bottom:16px;}
+.ob-input{
+  width:100%;padding:16px 20px;
+  background:var(--white);border:2.5px solid var(--border);
+  border-radius:14px;font-family:var(--F);font-size:16px;
+  font-weight:700;color:var(--text);outline:none;
+  transition:border-color .2s;
+  box-shadow:0 4px 0 rgba(0,0,0,.07);
+}
+.ob-input:focus{border-color:var(--blue);}
+.ob-input-label{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;display:block;}
+.avatar-grid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:280px;margin-bottom:24px;}
+.av-btn{
+  width:52px;height:52px;border-radius:14px;
+  border:3px solid var(--border);background:var(--bg);
+  cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.av-btn:active{transform:scale(.88);}
+.av-btn.selected{border-color:var(--blue);background:var(--blue-lo);box-shadow:0 3px 0 rgba(10,145,209,.2);}
+
+/* Buttons */
+.ob-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;max-width:320px;padding:16px;
+  border:none;border-radius:16px;cursor:pointer;
+  font-family:var(--F);font-weight:900;font-size:16px;
+  transition:all .15s;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.ob-btn.primary{
+  background:var(--blue);color:#fff;
+  box-shadow:0 5px 0 var(--blue-dk);
+}
+.ob-btn.primary:active{transform:translateY(3px);box-shadow:0 2px 0 var(--blue-dk);}
+.ob-btn.secondary{
+  background:var(--white);color:var(--muted);
+  border:2.5px solid var(--border);
+  box-shadow:0 4px 0 rgba(0,0,0,.07);
+  margin-top:10px;
+}
+.ob-btn-row{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;max-width:320px;}
+.ob-back{
+  background:none;border:none;cursor:pointer;
+  font-family:var(--F);font-weight:700;font-size:13px;
+  color:var(--muted);padding:10px;margin-top:4px;
+}
+
+/* Ready screen */
+.ready-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:20px 0 32px;max-width:340px;}
+.ready-card{
+  background:var(--white);border-radius:16px;padding:16px;
+  text-align:center;flex:1;min-width:80px;
+  box-shadow:0 5px 0 rgba(0,0,0,.08);
+}
+.rc-icon{font-size:28px;margin-bottom:6px;}
+.rc-label{font-size:12px;font-weight:800;color:var(--muted);}
+.rc-val{font-family:var(--FH);font-size:18px;color:var(--text);}
+
+/* ═══════════ APP SHELL ═══════════ */
+#app{display:none;height:100vh;overflow:hidden;}
+#app.visible{display:flex;}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);height:100vh;
+  background:var(--white);border-right:2px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;padding:14px 10px;
+  overflow-y:auto;
+}
+.s-logo{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:20px;cursor:pointer;}
+.s-logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:18px;box-shadow:0 4px 0 var(--blue-dk);
+}
+.s-logo-name{font-family:var(--FH);font-size:18px;}
+.s-logo-name b{color:var(--blue);}
+.s-nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:12px;cursor:pointer;
+  transition:all .15s;font-weight:800;font-size:13px;
+  color:var(--muted);margin-bottom:2px;
+  border:2px solid transparent;position:relative;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.s-nav-item:hover{background:var(--bg);color:var(--text);}
+.s-nav-item.active{background:var(--blue-lo);color:var(--blue);border-color:rgba(28,176,246,.2);}
+.s-nav-item .ni-icon{font-size:20px;width:24px;text-align:center;flex-shrink:0;}
+.s-badge{
+  position:absolute;right:10px;
+  background:var(--red);color:#fff;
+  font-size:9px;font-weight:900;
+  padding:1px 6px;border-radius:10px;
+}
+.s-streak{
+  margin-top:auto;background:var(--orange-lo);
+  border:2px solid rgba(255,150,0,.2);border-radius:12px;padding:12px;
+}
+.s-streak-row{display:flex;align-items:center;gap:10px;}
+.s-streak-icon{font-size:28px;}
+.s-streak-num{font-family:var(--FH);font-size:20px;color:var(--orange);}
+.s-streak-lbl{font-size:11px;font-weight:700;color:var(--muted);}
+
+/* MAIN COL */
+.main-col{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0;}
+
+/* TOPBAR */
+.topbar{
+  height:var(--topbar-h);background:var(--white);
+  border-bottom:2px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;flex-shrink:0;gap:8px;
+}
+.tb-left{display:flex;align-items:center;gap:8px;}
+.tb-subject{
+  background:var(--blue-lo);border:1.5px solid rgba(28,176,246,.2);
+  padding:5px 12px;border-radius:20px;
+  display:flex;align-items:center;gap:6px;
+  font-weight:800;font-size:13px;color:var(--blue);
+}
+.tb-subject i{font-size:16px;}
+.tb-grade{
+  background:var(--purple-lo);border:1.5px solid rgba(168,85,247,.2);
+  padding:5px 12px;border-radius:20px;
+  font-weight:800;font-size:12px;color:var(--purple);
+  display:none;
+}
+.tb-stats{display:flex;gap:10px;align-items:center;}
+.ts{display:flex;align-items:center;gap:4px;font-weight:900;font-size:13px;}
+.ts i{font-size:17px;}
+
+/* PAGES */
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{
+  display:none;position:absolute;inset:0;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  animation:pgIn .25s ease;
+}
+.page.active{display:flex;}
+@keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-body{display:flex;width:100%;min-height:100%;}
+.page-content{flex:1;padding:22px;min-width:0;}
+.rpanel{width:272px;flex-shrink:0;border-left:2px solid var(--border);padding:18px 14px;overflow-y:auto;}
+
+/* BOTTOM NAV */
+.bnav{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  height:var(--bnav-h);background:var(--white);
+  border-top:2px solid var(--border);z-index:200;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-items{display:flex;height:100%;align-items:center;}
+.bn-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+  padding:6px 2px;cursor:pointer;border:none;background:none;
+  transition:transform .12s;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.bn-item:active{transform:scale(.88);}
+.bn-item i{font-size:23px;color:var(--muted);transition:color .15s;}
+.bn-lbl{font-size:9px;font-weight:800;color:var(--muted);font-family:var(--F);}
+.bn-item.active i{color:var(--blue);}
+.bn-item.active .bn-lbl{color:var(--blue);}
+.bn-dot{position:absolute;top:7px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid var(--white);}
+
+/* ═══════════ CLAY CARDS ═══════════ */
+.clay{
+  background:var(--white);border-radius:16px;
+  box-shadow:0 5px 0 rgba(0,0,0,.08),0 8px 18px rgba(0,0,0,.05);
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1);
+}
+.clay:hover{transform:translateY(-2px);}
+.clay-btn{
+  border:none;border-radius:12px;font-family:var(--F);font-weight:900;
+  cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.16);
+  transition:transform .12s,box-shadow .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.clay-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.16);}
+
+/* ═══════════ PAGE: HOME ═══════════ */
+.pg-greeting{margin-bottom:18px;}
+.pg-greeting h1{font-family:var(--FH);font-size:clamp(20px,4vw,26px);margin-bottom:3px;}
+.pg-greeting p{font-size:13px;font-weight:600;color:var(--muted);}
+.goal-card{padding:18px;margin-bottom:14px;}
+.goal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.goal-title{font-family:var(--FH);font-size:17px;display:flex;align-items:center;gap:6px;}
+.goal-bars{display:flex;gap:6px;height:46px;margin-bottom:10px;}
+.gbar{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:9px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;position:relative;padding-bottom:3px;}
+.gbar-fill{position:absolute;bottom:0;left:0;right:0;border-radius:7px 7px 0 0;}
+.gbar-l{font-size:9px;font-weight:800;color:var(--muted);position:relative;z-index:1;}
+.gbar.today{background:var(--blue);border-color:var(--blue-dk);}
+.gbar.today .gbar-l{color:#fff;}
+.continue-card{padding:18px;margin-bottom:14px;background:linear-gradient(135deg,#EEF9FF,#F0F0FF);border:2px solid rgba(28,176,246,.18);cursor:pointer;}
+.cont-top{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+.cont-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.cont-lesson{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;}
+.cont-title{font-family:var(--FH);font-size:17px;}
+.cont-bar{height:7px;background:rgba(0,0,0,.07);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.cont-fill{height:100%;width:45%;background:var(--blue);border-radius:4px;}
+.btn-cont{width:100%;padding:12px;font-size:14px;color:#fff;background:var(--blue);border-radius:12px;box-shadow:0 4px 0 var(--blue-dk);}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.ms{padding:14px;text-align:center;}
+.ms i{font-size:26px;display:block;margin-bottom:5px;}
+.ms-num{font-family:var(--FH);font-size:20px;line-height:1;}
+.ms-lbl{font-size:10px;font-weight:700;color:var(--muted);margin-top:2px;}
+.panel-card{padding:16px;margin-bottom:12px;}
+.panel-title{font-family:var(--FH);font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.panel-title i{font-size:18px;}
+.xp-top{display:flex;justify-content:space-between;font-size:11px;font-weight:800;margin-bottom:5px;}
+.xp-track{height:12px;background:var(--bg);border-radius:6px;overflow:hidden;border:2px solid var(--border);}
+.xp-fill{height:100%;width:68%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--purple));animation:xpG 1.5s ease .4s both;transform-origin:left;}
+@keyframes xpG{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hearts{display:flex;gap:4px;}
+.heart{font-size:24px;}
+.heart.lost{filter:grayscale(1);opacity:.25;}
+.sw-wrap{display:flex;gap:5px;}
+.sw-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.sw-lbl{font-size:9px;font-weight:800;color:var(--muted);}
+.sw-dot{width:100%;aspect-ratio:1;max-width:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.sw-dot.done{background:var(--orange);box-shadow:0 2px 0 var(--orange-dk);}
+.sw-dot.today{background:var(--green);box-shadow:0 2px 0 var(--green-dk);animation:todP 1.5s ease infinite;}
+.sw-dot.miss{background:var(--bg);border:2px solid var(--border);}
+@keyframes todP{0%,100%{box-shadow:0 2px 0 var(--green-dk),0 0 0 0 rgba(88,204,2,.4)}50%{box-shadow:0 2px 0 var(--green-dk),0 0 0 7px rgba(88,204,2,0)}}
+
+/* ═══════════ PAGE: LEARN ═══════════ */
+#page-learn .page-body{display:block;}
+.learn-wrap{
+  padding:18px;min-height:100%;
+  display:flex;flex-direction:column;align-items:center;
+}
+.learn-hdr{
+  background:var(--white);border-radius:14px;padding:14px 16px;
+  margin-bottom:22px;display:flex;align-items:center;gap:12px;
+  width:100%;max-width:520px;
+  box-shadow:0 4px 0 rgba(0,0,0,.07);
+}
+.lhdr-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex-shrink:0;}
+.lhdr-info{flex:1;min-width:0;}
+.lhdr-name{font-family:var(--FH);font-size:16px;}
+.lhdr-sub{font-size:11px;font-weight:700;color:var(--muted);}
+.lhdr-bar{height:5px;background:var(--bg);border-radius:3px;margin-top:5px;overflow:hidden;}
+.lhdr-fill{height:100%;width:30%;background:var(--blue);}
+.unit-banner{
+  width:100%;max-width:520px;border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;
+  justify-content:space-between;margin-bottom:5px;
+  box-shadow:0 5px 0 rgba(0,0,0,.12);
+}
+.ub-l{} .ub-sec{font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-bottom:3px;}
+.ub-name{font-family:var(--FH);font-size:16px;color:#fff;}
+.ub-guide{
+  background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.3);
+  color:#fff;padding:5px 12px;font-size:11px;border-radius:9px;
+  font-family:var(--F);font-weight:700;cursor:pointer;flex-shrink:0;
+  transition:background .15s;-webkit-tap-highlight-color:transparent;
+}
+.ub-guide:hover{background:rgba(255,255,255,.38);}
+
+/* Path nodes */
+.path-col{width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;position:relative;margin-bottom:6px;}
+.path-col::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:32px;bottom:32px;width:4px;background:repeating-linear-gradient(180deg,#CBD5E1 0,#CBD5E1 6px,transparent 6px,transparent 13px);border-radius:2px;z-index:0;}
+.pnode{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
+.pnode-btn{
+  width:64px;height:64px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1);
+  position:relative;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  color:#fff;font-size:24px;
+}
+.pnode-btn.active{width:76px;height:76px;font-size:28px;animation:activePulse 2s ease infinite;}
+@keyframes activePulse{0%,100%{box-shadow:0 5px 0 rgba(0,0,0,.2),0 0 0 0 rgba(28,176,246,.5)}50%{box-shadow:0 5px 0 rgba(0,0,0,.2),0 0 0 12px rgba(28,176,246,0)}}
+.pnode-btn.done{}
+.pnode-btn.locked{filter:grayscale(.9);opacity:.4;cursor:default;}
+.pnode-btn:not(.locked):active{transform:scale(.88);}
+.pnode-xp{position:absolute;top:-4px;right:-6px;background:var(--yellow);color:var(--text);font-size:8px;font-weight:900;padding:2px 5px;border-radius:7px;box-shadow:0 2px 0 var(--yellow-dk);}
+.pnode-crown{position:absolute;top:-10px;font-size:13px;}
+.pnode-label{font-size:11px;font-weight:800;color:#64748B;margin:5px 0 8px;white-space:nowrap;}
+.pnode.left .pnode-btn{margin-left:-65px;}
+.pnode.right .pnode-btn{margin-left:65px;}
+/* Math symbols in nodes */
+.math-sym{font-family:var(--FH);font-size:22px;line-height:1;}
+.math-sym.big{font-size:26px;}
+
+/* ═══════════ PAGE: LEAGUES ═══════════ */
+.lgs-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.lgs-title{font-family:var(--FH);font-size:clamp(18px,4vw,24px);}
+.lgs-timer{background:var(--orange-lo);border:2px solid rgba(255,150,0,.2);padding:6px 12px;border-radius:9px;font-weight:800;font-size:12px;color:var(--orange);display:flex;align-items:center;gap:5px;}
+.lg-tabs{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap;}
+.lg-tab{padding:6px 11px;border-radius:9px;border:2px solid var(--border);background:var(--white);color:var(--muted);font-weight:800;font-size:11px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:4px;}
+.lg-tab.active{background:var(--purple-lo);border-color:rgba(168,85,247,.3);color:var(--purple);}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin-bottom:18px;padding:12px 0;}
+.pod-item{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.pod-av{border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid var(--border);font-size:20px;}
+.pod-base{border-radius:11px 11px 0 0;display:flex;align-items:center;justify-content:center;}
+.pod-rank{font-family:var(--FH);font-size:18px;color:#fff;}
+.pod-name{font-size:11px;font-weight:800;text-align:center;}
+.pod-xp{font-size:10px;font-weight:700;color:var(--muted);}
+.lb-list{background:var(--white);border-radius:16px;overflow:hidden;box-shadow:0 5px 0 rgba(0,0,0,.07);}
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:2px solid var(--bg);cursor:pointer;transition:background .12s;-webkit-tap-highlight-color:transparent;}
+.lb-row:hover{background:var(--bg);}
+.lb-row:last-child{border-bottom:none;}
+.lb-row.you{background:rgba(28,176,246,.05);border:2px solid rgba(28,176,246,.15);}
+.lb-num{font-family:var(--FH);font-size:15px;width:22px;text-align:center;flex-shrink:0;}
+.lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.lb-name{flex:1;font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-xp{font-weight:900;font-size:12px;color:var(--blue);}
+.lb-ch{font-size:9px;font-weight:800;padding:2px 5px;border-radius:5px;flex-shrink:0;}
+.lb-ch.up{background:rgba(88,204,2,.1);color:var(--green);}
+.lb-ch.dn{background:rgba(255,75,75,.1);color:var(--red);}
+.lb-ch.eq{background:var(--bg);color:var(--muted);}
+.zone-bar{padding:9px 14px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;}
+.zone-bar.promo{background:rgba(88,204,2,.07);color:var(--green);}
+.zone-bar.demo{background:rgba(255,75,75,.05);color:var(--red);}
+.my-lg-card{padding:20px;text-align:center;margin-bottom:12px;}
+.my-lg-icon-wrap{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;box-shadow:0 5px 0 rgba(0,0,0,.15);}
+.my-lg-name{font-family:var(--FH);font-size:18px;}
+.my-lg-rank{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;}
+.lg-prog-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;border:2px solid var(--border);margin-bottom:5px;}
+.lg-prog-fill{height:100%;border-radius:3px;}
+.lg-prog-lbls{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:var(--muted);}
+.all-lg-title{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 7px;}
+.mini-lg{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;cursor:pointer;transition:background .12s;-webkit-tap-highlight-color:transparent;}
+.mini-lg:hover{background:var(--bg);}
+.mini-lg.cur{background:var(--purple-lo);}
+.mlg-ic{font-size:18px;}
+.mlg-nm{font-weight:800;font-size:12px;flex:1;}
+.mlg-tag{font-size:10px;font-weight:800;}
+
+/* ═══════════ PAGE: QUESTS ═══════════ */
+.q-tabs{display:flex;border:2px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:18px;background:var(--white);}
+.q-tab{flex:1;padding:10px;font-weight:800;font-size:12px;text-align:center;cursor:pointer;transition:all .15s;color:var(--muted);border:none;background:none;font-family:var(--F);-webkit-tap-highlight-color:transparent;}
+.q-tab.active{background:var(--blue);color:#fff;}
+.quest-card{background:var(--white);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 4px 0 rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .15s;-webkit-tap-highlight-color:transparent;}
+.quest-card:active{transform:scale(.97);}
+.quest-card.done{opacity:.5;}
+.qi-wrap{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.qi-info{flex:1;min-width:0;}
+.qi-name{font-weight:800;font-size:13px;margin-bottom:2px;}
+.qi-desc{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qi-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.qi-fill{height:100%;border-radius:3px;}
+.qi-reward{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;}
+.qi-xp{background:var(--yellow);color:var(--text);padding:2px 8px;border-radius:8px;font-size:10px;font-weight:900;box-shadow:0 2px 0 var(--yellow-dk);}
+.gem-display{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;}
+.gem-big{font-size:44px;}
+.gem-count{font-family:var(--FH);font-size:34px;color:var(--blue);}
+.week-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ws-item{border-radius:11px;padding:11px;text-align:center;}
+.ws-num{font-family:var(--FH);font-size:20px;}
+.ws-lbl{font-size:9px;font-weight:700;color:var(--muted);}
+
+/* ═══════════ PAGE: PROFILE ═══════════ */
+.prof-hero{background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:18px;padding:22px;display:flex;align-items:center;gap:16px;margin-bottom:16px;color:#fff;box-shadow:0 7px 0 rgba(0,0,0,.1),0 12px 24px rgba(28,176,246,.2);}
+.ph-av-wrap{position:relative;flex-shrink:0;}
+.ph-av{width:66px;height:66px;border-radius:50%;background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:32px;}
+.ph-lv{position:absolute;bottom:-3px;right:-3px;background:var(--yellow);color:var(--text);font-size:9px;font-weight:900;padding:2px 6px;border-radius:8px;box-shadow:0 2px 0 var(--yellow-dk);}
+.ph-name{font-family:var(--FH);font-size:clamp(16px,4vw,20px);}
+.ph-user{font-size:12px;font-weight:700;opacity:.75;margin-bottom:6px;}
+.ph-badges{display:flex;gap:4px;flex-wrap:wrap;}
+.phb{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.28);padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.sg{padding:14px;text-align:center;}
+.sg i{font-size:22px;display:block;margin-bottom:4px;}
+.sg-val{font-family:var(--FH);font-size:clamp(16px,3vw,20px);line-height:1;}
+.sg-lbl{font-size:9px;font-weight:700;color:var(--muted);margin-top:2px;}
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.ach{background:var(--white);border-radius:12px;padding:12px;text-align:center;box-shadow:0 3px 0 rgba(0,0,0,.07);cursor:pointer;transition:transform .15s;-webkit-tap-highlight-color:transparent;}
+.ach:active{transform:scale(.9);}
+.ach.locked{filter:grayscale(1);opacity:.3;}
+.ach i{font-size:26px;display:block;margin-bottom:3px;}
+.ach-nm{font-size:9px;font-weight:800;color:var(--muted);}
+.ach:not(.locked) .ach-nm{color:var(--text);}
+.cal-wrap{background:var(--white);border-radius:16px;padding:16px;box-shadow:0 4px 0 rgba(0,0,0,.07);}
+.cal-month{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;margin-bottom:9px;cursor:pointer;}
+.cal-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:5px;}
+.cal-h{font-size:9px;font-weight:800;color:var(--muted);text-align:center;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-d{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.cal-d.done{background:var(--orange);color:#fff;box-shadow:0 2px 0 var(--orange-dk);}
+.cal-d.today{background:var(--green);color:#fff;box-shadow:0 2px 0 var(--green-dk);}
+.cal-d.miss{background:var(--bg);color:var(--muted);}
+.cal-d.empty{background:transparent;}
+
+/* ═══════════ PAGE: SHOP ═══════════ */
+#page-shop .page-body{display:block;}
+.shop-wrap{padding:20px;}
+.shop-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.shop-title{font-family:var(--FH);font-size:clamp(18px,4vw,24px);}
+.currencies{display:flex;gap:7px;}
+.curr{display:flex;align-items:center;gap:5px;background:var(--white);border:2px solid var(--border);padding:6px 12px;border-radius:9px;font-weight:900;font-size:12px;box-shadow:0 3px 0 rgba(0,0,0,.06);}
+.curr i{font-size:15px;}
+.shop-sec{font-family:var(--FH);font-size:17px;margin:18px 0 10px;display:flex;align-items:center;gap:6px;}
+.shop-grid{display:grid;gap:10px;}
+.shop-card{background:var(--white);border-radius:16px;padding:18px;text-align:center;box-shadow:0 5px 0 rgba(0,0,0,.08);cursor:pointer;transition:transform .15s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;}
+.shop-card:active{transform:scale(.95);}
+.shop-card.best::before{content:'BEST VALUE';position:absolute;top:8px;right:-14px;background:var(--red);color:#fff;font-size:8px;font-weight:900;padding:3px 24px;transform:rotate(35deg);letter-spacing:.06em;}
+.shop-card i{font-size:38px;display:block;margin-bottom:7px;}
+.shop-name{font-family:var(--FH);font-size:15px;margin-bottom:2px;}
+.shop-desc{font-size:11px;font-weight:600;color:var(--muted);line-height:1.5;margin-bottom:12px;}
+.shop-price{display:inline-flex;align-items:center;gap:4px;background:var(--blue-lo);color:var(--blue);padding:6px 16px;border-radius:9px;font-weight:900;font-size:13px;box-shadow:0 3px 0 var(--blue-dk);border:none;font-family:var(--F);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media(max-width:1024px) and (min-width:769px){
+  :root{--sidebar-w:64px;}
+  .s-logo-name,.s-nav-item span:not(.ni-icon),.s-streak .s-streak-lbl,.s-streak .s-streak-num{display:none;}
+  .s-streak{padding:8px;display:flex;justify-content:center;}
+  .s-logo{justify-content:center;padding:8px 0;}
+  .s-nav-item{justify-content:center;padding:11px;gap:0;border-radius:11px;}
+  .s-badge{right:4px;top:4px;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .ach-grid{grid-template-columns:repeat(3,1fr);}
+  .shop-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:768px){
+  body{overflow:auto;}
+  .sidebar{display:none;}
+  #app.visible{flex-direction:column;}
+  .main-col{width:100%;height:calc(100vh - var(--bnav-h));margin-left:0;}
+  .pages{height:100%;}
+  .bnav{display:block;}
+  .rpanel{display:none;}
+  .tb-grade{display:inline-flex;}
+  .topbar{padding:0 12px;}
+  .ts{font-size:12px;}
+  .ts i{font-size:15px;}
+  .page-content{padding:14px;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .ach-grid{grid-template-columns:repeat(4,1fr);gap:6px;}
+  .mini-stats{gap:8px;}
+  .prof-hero{flex-direction:row;gap:12px;}
+  #page-quests .rpanel,#page-profile .rpanel,#page-leagues .rpanel{display:block;border:none;border-top:2px solid var(--border);width:100%;padding:14px;}
+  #page-quests .page-body,#page-profile .page-body,#page-leagues .page-body{flex-direction:column;}
+  .shop-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .learn-wrap{padding:14px;}
+  .pnode.left .pnode-btn{margin-left:-55px;}
+  .pnode.right .pnode-btn{margin-left:55px;}
+}
+@media(max-width:380px){
+  .ts:nth-child(4){display:none;}
+  .ach-grid{grid-template-columns:repeat(3,1fr);}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .mini-stats .ms-lbl{font-size:9px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     ONBOARDING
+═══════════════════════════════════════ -->
+<div id="onboarding">
+  <div class="ob-progress"><div class="ob-progress-fill" id="obProgress" style="width:0%"></div></div>
+  <div class="ob-screens">
+
+    <!-- Screen 0: Welcome -->
+    <div class="ob-screen active" id="ob0">
+      <div class="ob-mascot">
+        <svg width="58" height="58" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Plus sign top-left -->
+          <line x1="10" y1="16" x2="22" y2="16" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="16" y1="10" x2="16" y2="22" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Minus sign top-right -->
+          <line x1="42" y1="16" x2="54" y2="16" stroke="rgba(255,255,255,.7)" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Multiply bottom-left -->
+          <line x1="11" y1="43" x2="21" y2="53" stroke="rgba(255,255,255,.7)" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="21" y1="43" x2="11" y2="53" stroke="rgba(255,255,255,.7)" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Division bottom-right -->
+          <line x1="42" y1="48" x2="54" y2="48" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="48" cy="43" r="2.2" fill="white"/>
+          <circle cx="48" cy="53" r="2.2" fill="white"/>
+          <!-- Center equals -->
+          <line x1="24" y1="29" x2="40" y2="29" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          <line x1="24" y1="35" x2="40" y2="35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="ob-title">Welcome to<br><span>MathQuest</span></h1>
+      <p class="ob-sub">Master mathematics the fun way — lessons, challenges, and competitions designed just for you.</p>
+      <div class="ob-btn-row">
+        <button class="ob-btn primary" onclick="obNext()">
+          <i class="ti ti-arrow-right"></i> Get Started
+        </button>
+        <button class="ob-btn secondary" onclick="obNext()">I already have an account</button>
+      </div>
+    </div>
+
+    <!-- Screen 1: Level -->
+    <div class="ob-screen" id="ob1">
+      <div class="ob-section-title">What's your level?</div>
+      <div class="ob-section-sub">We'll build a curriculum just for you</div>
+      <div class="level-grid">
+        <div class="level-card" data-level="primary" onclick="selectLevel(this)">
+          <div class="lc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#58CC02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6m0 0H2m20 0l-2 4H4l-2-4"/><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M6 12v5"/><path d="M18 12v5"/></svg>
+          </div>
+          <div class="lc-name">Primary</div>
+          <div class="lc-sub">Grades 1–6</div>
+        </div>
+        <div class="level-card" data-level="middle" onclick="selectLevel(this)">
+          <div class="lc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1CB0F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div class="lc-name">Middle</div>
+          <div class="lc-sub">Grades 7–9</div>
+        </div>
+        <div class="level-card" data-level="secondary" onclick="selectLevel(this)">
+          <div class="lc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          </div>
+          <div class="lc-name">Secondary</div>
+          <div class="lc-sub">Grades 10–12</div>
+        </div>
+        <div class="level-card" data-level="university" onclick="selectLevel(this)">
+          <div class="lc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF9600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+          </div>
+          <div class="lc-name">University</div>
+          <div class="lc-sub">Higher Ed</div>
+        </div>
+        <div class="level-card" data-level="teacher" onclick="selectLevel(this)">
+          <div class="lc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div class="lc-name">Teacher</div>
+          <div class="lc-sub">Educator</div>
+        </div>
+        <div class="level-card" data-level="parent" onclick="selectLevel(this)">
+          <div class="lc-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F472B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="lc-name">Parent</div>
+          <div class="lc-sub">For my child</div>
+        </div>
+      </div>
+      <div class="ob-btn-row" style="margin-top:20px">
+        <button class="ob-btn primary" id="ob1-next" onclick="obNext()" style="opacity:.4;pointer-events:none">
+          <i class="ti ti-arrow-right"></i> Continue
+        </button>
+        <button class="ob-back" onclick="obBack()"><i class="ti ti-arrow-left"></i> Back</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: Grade -->
+    <div class="ob-screen" id="ob2">
+      <div class="ob-section-title" id="ob2-title">Select your grade</div>
+      <div class="ob-section-sub">So we can match the right curriculum</div>
+      <div class="grade-grid" id="gradeGrid"></div>
+      <div class="ob-btn-row" style="margin-top:20px">
+        <button class="ob-btn primary" id="ob2-next" onclick="obNext()" style="opacity:.4;pointer-events:none">
+          <i class="ti ti-arrow-right"></i> Continue
+        </button>
+        <button class="ob-back" onclick="obBack()"><i class="ti ti-arrow-left"></i> Back</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Goal -->
+    <div class="ob-screen" id="ob3">
+      <div class="ob-section-title">Set your daily goal</div>
+      <div class="ob-section-sub">A consistent daily habit beats a big irregular session</div>
+      <div class="goal-list">
+        <div class="goal-item" data-goal="casual" onclick="selectGoal(this)">
+          <div class="gi-icon"><i class="ti ti-coffee" style="font-size:20px;color:var(--blue)"></i></div>
+          <div class="gi-info"><div class="gi-label">Casual</div><div class="gi-sub">10 minutes per day</div></div>
+          <span class="gi-badge" style="background:var(--blue-lo);color:var(--blue)">Easy</span>
+        </div>
+        <div class="goal-item" data-goal="regular" onclick="selectGoal(this)">
+          <div class="gi-icon"><i class="ti ti-flame" style="font-size:20px;color:var(--orange)"></i></div>
+          <div class="gi-info"><div class="gi-label">Regular</div><div class="gi-sub">15 minutes per day</div></div>
+          <span class="gi-badge" style="background:var(--orange-lo);color:var(--orange)">Recommended</span>
+        </div>
+        <div class="goal-item" data-goal="serious" onclick="selectGoal(this)">
+          <div class="gi-icon"><i class="ti ti-bolt" style="font-size:20px;color:var(--green)"></i></div>
+          <div class="gi-info"><div class="gi-label">Serious</div><div class="gi-sub">20 minutes per day</div></div>
+          <span class="gi-badge" style="background:var(--green-lo);color:var(--green)">Effective</span>
+        </div>
+        <div class="goal-item" data-goal="intense" onclick="selectGoal(this)">
+          <div class="gi-icon"><i class="ti ti-rocket" style="font-size:20px;color:var(--purple)"></i></div>
+          <div class="gi-info"><div class="gi-label">Intense</div><div class="gi-sub">30 minutes per day</div></div>
+          <span class="gi-badge" style="background:var(--purple-lo);color:var(--purple)">Advanced</span>
+        </div>
+      </div>
+      <div class="ob-btn-row" style="margin-top:16px">
+        <button class="ob-btn primary" id="ob3-next" onclick="obNext()" style="opacity:.4;pointer-events:none">
+          <i class="ti ti-arrow-right"></i> Continue
+        </button>
+        <button class="ob-back" onclick="obBack()"><i class="ti ti-arrow-left"></i> Back</button>
+      </div>
+    </div>
+
+    <!-- Screen 4: Profile -->
+    <div class="ob-screen" id="ob4">
+      <div class="ob-section-title">Create your profile</div>
+      <div class="ob-section-sub">Choose your avatar and enter your name</div>
+      <div class="avatar-grid">
+        <div class="av-btn selected" data-av="A" data-color="#1CB0F6" onclick="selectAv(this)" style="background:rgba(28,176,246,.12);border-color:#1CB0F6">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1CB0F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="av-btn" data-av="B" data-color="#A855F7" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        </div>
+        <div class="av-btn" data-av="C" data-color="#58CC02" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#58CC02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+        </div>
+        <div class="av-btn" data-av="D" data-color="#FF9600" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF9600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="av-btn" data-av="E" data-color="#14B8A6" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="av-btn" data-av="F" data-color="#F472B6" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F472B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+        </div>
+        <div class="av-btn" data-av="G" data-color="#FF4B4B" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF4B4B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21a9 9 0 0 1 18 0"/><line x1="12" y1="13" x2="12" y2="21"/></svg>
+        </div>
+        <div class="av-btn" data-av="H" data-color="#CC9F00" onclick="selectAv(this)">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#CC9F00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7.5-4-5-4 5z"/></svg>
+        </div>
+      </div>
+      <div class="ob-input-wrap">
+        <label class="ob-input-label">Your name</label>
+        <input class="ob-input" id="nameInput" type="text" placeholder="e.g. Ahmed" oninput="checkName()" autocomplete="off">
+      </div>
+      <div class="ob-btn-row">
+        <button class="ob-btn primary" id="ob4-next" onclick="obNext()" style="opacity:.4;pointer-events:none">
+          <i class="ti ti-arrow-right"></i> Continue
+        </button>
+        <button class="ob-back" onclick="obBack()"><i class="ti ti-arrow-left"></i> Back</button>
+      </div>
+    </div>
+
+    <!-- Screen 5: Ready -->
+    <div class="ob-screen" id="ob5">
+      <div class="ob-mascot" style="animation:none;background:linear-gradient(135deg,var(--green),var(--teal))">
+        <svg width="58" height="58" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="10,34 22,46 54,18" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="ob-title">You're all set,<br><span id="readyName">Ahmed</span>!</h1>
+      <div class="ready-cards">
+        <div class="ready-card">
+          <div class="rc-icon"><i class="ti ti-school" style="color:var(--blue)"></i></div>
+          <div class="rc-label">Level</div>
+          <div class="rc-val" id="rcLevel">Primary</div>
+        </div>
+        <div class="ready-card">
+          <div class="rc-icon"><i class="ti ti-layers-subtract" style="color:var(--purple)"></i></div>
+          <div class="rc-label">Grade</div>
+          <div class="rc-val" id="rcGrade">Grade 5</div>
+        </div>
+        <div class="ready-card">
+          <div class="rc-icon"><i class="ti ti-clock" style="color:var(--orange)"></i></div>
+          <div class="rc-label">Goal</div>
+          <div class="rc-val" id="rcGoal">15 min</div>
+        </div>
+      </div>
+      <div class="ob-btn-row">
+        <button class="ob-btn primary" onclick="launchApp()" style="background:var(--green);box-shadow:0 5px 0 var(--green-dk)">
+          <i class="ti ti-player-play"></i> Start Learning!
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /ob-screens -->
+</div><!-- /onboarding -->
+
+<!-- ═══════════════════════════════════════
+     APP
+═══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="s-logo" onclick="navigate('home')">
+      <div class="s-logo-icon">
+        <svg width="20" height="20" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="10" y1="16" x2="22" y2="16" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <line x1="16" y1="10" x2="16" y2="22" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <line x1="42" y1="16" x2="54" y2="16" stroke="rgba(255,255,255,.7)" stroke-width="5" stroke-linecap="round"/>
+          <line x1="11" y1="43" x2="21" y2="53" stroke="rgba(255,255,255,.7)" stroke-width="5" stroke-linecap="round"/>
+          <line x1="21" y1="43" x2="11" y2="53" stroke="rgba(255,255,255,.7)" stroke-width="5" stroke-linecap="round"/>
+          <line x1="42" y1="48" x2="54" y2="48" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="48" cy="41" r="3" fill="white"/>
+          <circle cx="48" cy="55" r="3" fill="white"/>
+          <line x1="26" y1="30" x2="38" y2="30" stroke="white" stroke-width="4" stroke-linecap="round"/>
+          <line x1="26" y1="36" x2="38" y2="36" stroke="white" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="s-logo-name"><b>Math</b>Quest</div>
+    </div>
+    <div class="s-nav-item active" data-page="home"><span class="ni-icon"><i class="ti ti-home"></i></span><span>Home</span></div>
+    <div class="s-nav-item" data-page="learn"><span class="ni-icon"><i class="ti ti-books"></i></span><span>Learn</span></div>
+    <div class="s-nav-item" data-page="leagues"><span class="ni-icon"><i class="ti ti-trophy"></i></span><span>Leagues</span></div>
+    <div class="s-nav-item" data-page="quests"><span class="ni-icon"><i class="ti ti-target"></i></span><span>Quests</span><span class="s-badge">3</span></div>
+    <div class="s-nav-item" data-page="profile"><span class="ni-icon"><i class="ti ti-user"></i></span><span>Profile</span></div>
+    <div class="s-nav-item" data-page="shop"><span class="ni-icon"><i class="ti ti-diamond"></i></span><span>Shop</span></div>
+    <div class="s-streak">
+      <div class="s-streak-row">
+        <i class="ti ti-flame s-streak-icon" style="color:var(--orange);font-size:28px"></i>
+        <div><div class="s-streak-num">12</div><div class="s-streak-lbl">Day streak</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-col">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-subject"><i class="ti ti-math"></i><span id="tbSubject">Mathematics</span></div>
+        <div class="tb-grade" id="tbGrade">Grade 5</div>
+      </div>
+      <div class="tb-stats">
+        <div class="ts"><i class="ti ti-flame" style="color:var(--orange)"></i><span style="color:var(--orange)">12</span></div>
+        <div class="ts"><i class="ti ti-diamond" style="color:var(--blue)"></i><span style="color:var(--blue)">180</span></div>
+        <div class="ts"><i class="ti ti-heart" style="color:var(--red)"></i><span style="color:var(--red)">3</span></div>
+        <div class="ts"><i class="ti ti-bolt" style="color:var(--yellow-dk)"></i><span style="color:var(--yellow-dk)">3,420</span></div>
+      </div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="pages">
+
+      <!-- ══ HOME ══ -->
+      <div class="page active" id="page-home">
+        <div class="page-body">
+          <div class="page-content">
+            <div class="pg-greeting">
+              <h1 id="homeGreet">Good morning!</h1>
+              <p id="homeSub">You're on a 12-day streak. Keep it going!</p>
+            </div>
+            <div class="clay goal-card">
+              <div class="goal-hdr">
+                <div class="goal-title"><i class="ti ti-bolt" style="color:var(--blue)"></i> Daily Goal</div>
+                <span style="font-size:11px;font-weight:700;color:var(--blue);cursor:pointer">Edit</span>
+              </div>
+              <div class="goal-bars">
+                <div class="gbar"><div class="gbar-fill" style="height:100%;background:rgba(28,176,246,.18)"></div><span class="gbar-l">Mon</span></div>
+                <div class="gbar"><div class="gbar-fill" style="height:80%;background:rgba(28,176,246,.18)"></div><span class="gbar-l">Tue</span></div>
+                <div class="gbar"><div class="gbar-fill" style="height:90%;background:rgba(28,176,246,.18)"></div><span class="gbar-l">Wed</span></div>
+                <div class="gbar today"><div class="gbar-fill" style="height:45%;background:rgba(255,255,255,.2)"></div><span class="gbar-l">Thu</span></div>
+                <div class="gbar"><span class="gbar-l">Fri</span></div>
+                <div class="gbar"><span class="gbar-l">Sat</span></div>
+                <div class="gbar"><span class="gbar-l">Sun</span></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;font-weight:700;color:var(--muted)">240 / 500 XP today</span>
+                <span style="font-family:var(--FH);font-size:16px;color:var(--blue)">48%</span>
+              </div>
+            </div>
+            <div class="clay continue-card" onclick="navigate('learn')">
+              <div class="cont-top">
+                <div class="cont-icon" style="background:rgba(168,85,247,.12)"><i class="ti ti-divide" style="font-size:26px;color:var(--purple)"></i></div>
+                <div>
+                  <div class="cont-lesson" id="contLesson">UNIT 3 · LESSON 5</div>
+                  <div class="cont-title" id="contTitle">Long Division</div>
+                </div>
+              </div>
+              <div class="cont-bar"><div class="cont-fill"></div></div>
+              <button class="clay-btn btn-cont">Continue <i class="ti ti-arrow-right"></i></button>
+            </div>
+            <div class="mini-stats">
+              <div class="clay ms"><i class="ti ti-flame" style="color:var(--orange)"></i><div class="ms-num" style="color:var(--orange)">12</div><div class="ms-lbl">Streak</div></div>
+              <div class="clay ms"><i class="ti ti-bolt" style="color:var(--blue)"></i><div class="ms-num" style="color:var(--blue)">3,420</div><div class="ms-lbl">Total XP</div></div>
+              <div class="clay ms"><i class="ti ti-trophy" style="color:var(--yellow-dk)"></i><div class="ms-num" style="color:var(--yellow-dk)">Silver</div><div class="ms-lbl">League</div></div>
+            </div>
+            <div class="clay" style="padding:14px;cursor:pointer;background:linear-gradient(135deg,#FFFBEB,#FFF7E0);border:2px solid rgba(255,200,0,.18)" onclick="navigate('quests')">
+              <div class="panel-title"><i class="ti ti-target" style="color:var(--orange)"></i> Daily Quest</div>
+              <div style="font-size:13px;font-weight:700;margin-bottom:7px">Solve 5 problems correctly</div>
+              <div style="height:6px;background:rgba(0,0,0,.07);border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:60%;background:var(--yellow);border-radius:3px"></div></div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted)">3 / 5 solved</div>
+            </div>
+          </div>
+          <!-- RIGHT PANEL -->
+          <div class="rpanel">
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-bolt" style="color:var(--blue)"></i> XP Progress</div>
+              <div class="xp-top"><span>Level 12</span><span style="color:var(--blue)">3,420/4,000</span></div>
+              <div class="xp-track"><div class="xp-fill"></div></div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:5px">580 XP to Level 13</div>
+            </div>
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-heart" style="color:var(--red)"></i> Hearts</div>
+              <div class="hearts">
+                <i class="ti ti-heart-filled heart" style="color:var(--red);font-size:26px"></i>
+                <i class="ti ti-heart-filled heart" style="color:var(--red);font-size:26px"></i>
+                <i class="ti ti-heart-filled heart" style="color:var(--red);font-size:26px"></i>
+                <i class="ti ti-heart heart lost" style="color:var(--muted);font-size:26px"></i>
+                <i class="ti ti-heart heart lost" style="color:var(--muted);font-size:26px"></i>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:6px">Refills in 2h 40min</div>
+            </div>
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-flame" style="color:var(--orange)"></i> This Week</div>
+              <div class="sw-wrap">
+                <div class="sw-day"><span class="sw-lbl">M</span><div class="sw-dot done"><i class="ti ti-check" style="font-size:10px;color:#fff"></i></div></div>
+                <div class="sw-day"><span class="sw-lbl">T</span><div class="sw-dot done"><i class="ti ti-check" style="font-size:10px;color:#fff"></i></div></div>
+                <div class="sw-day"><span class="sw-lbl">W</span><div class="sw-dot done"><i class="ti ti-check" style="font-size:10px;color:#fff"></i></div></div>
+                <div class="sw-day"><span class="sw-lbl">T</span><div class="sw-dot today"><i class="ti ti-flame" style="font-size:10px;color:#fff"></i></div></div>
+                <div class="sw-day"><span class="sw-lbl">F</span><div class="sw-dot miss"></div></div>
+                <div class="sw-day"><span class="sw-lbl">S</span><div class="sw-dot miss"></div></div>
+                <div class="sw-day"><span class="sw-lbl">S</span><div class="sw-dot miss"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ LEARN ══ -->
+      <div class="page" id="page-learn">
+        <div class="page-body">
+          <div class="learn-wrap" id="learnWrap">
+            <!-- Dynamically built by JS based on curriculum -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ LEAGUES ══ -->
+      <div class="page" id="page-leagues">
+        <div class="page-body">
+          <div class="page-content">
+            <div class="lgs-hdr">
+              <div class="lgs-title"><i class="ti ti-trophy" style="color:var(--yellow-dk)"></i> Leagues</div>
+              <div class="lgs-timer"><i class="ti ti-clock"></i> 3d 08h left</div>
+            </div>
+            <div class="lg-tabs">
+              <div class="lg-tab"><i class="ti ti-medal" style="color:#CD7F32"></i> Bronze</div>
+              <div class="lg-tab active"><i class="ti ti-medal-2" style="color:#888"></i> Silver (You)</div>
+              <div class="lg-tab"><i class="ti ti-crown" style="color:var(--yellow-dk)"></i> Gold</div>
+              <div class="lg-tab"><i class="ti ti-diamond" style="color:var(--blue)"></i> Sapphire</div>
+            </div>
+            <div class="podium">
+              <div class="pod-item">
+                <div class="pod-av" style="width:44px;height:44px;background:rgba(168,85,247,.12)"><i class="ti ti-user-filled" style="font-size:20px;color:var(--purple)"></i></div>
+                <div class="pod-name">sofia_m</div><div class="pod-xp">1,540 XP</div>
+                <div class="pod-base" style="width:68px;height:58px;background:linear-gradient(180deg,#C0C0C0,#A8A8A8);box-shadow:0 4px 0 #888"><span class="pod-rank">2</span></div>
+              </div>
+              <div class="pod-item">
+                <i class="ti ti-crown" style="font-size:22px;color:var(--yellow)"></i>
+                <div class="pod-av" style="width:56px;height:56px;background:rgba(255,200,0,.14);border-color:var(--yellow)"><i class="ti ti-user-filled" style="font-size:24px;color:var(--yellow-dk)"></i></div>
+                <div class="pod-name" style="font-weight:900">karim_a</div><div class="pod-xp">1,820 XP</div>
+                <div class="pod-base" style="width:68px;height:82px;background:linear-gradient(180deg,var(--yellow),var(--orange));box-shadow:0 4px 0 var(--orange-dk)"><span class="pod-rank">1</span></div>
+              </div>
+              <div class="pod-item">
+                <div class="pod-av" style="width:44px;height:44px;background:rgba(255,150,0,.1)"><i class="ti ti-user-filled" style="font-size:20px;color:var(--orange)"></i></div>
+                <div class="pod-name">ali_k</div><div class="pod-xp">1,380 XP</div>
+                <div class="pod-base" style="width:68px;height:42px;background:linear-gradient(180deg,#CD7F32,#A0631E);box-shadow:0 4px 0 #7A4B16"><span class="pod-rank">3</span></div>
+              </div>
+            </div>
+            <div class="zone-bar promo"><i class="ti ti-arrow-up"></i> <b>Promotion Zone</b> — Top 10 advance to Gold</div>
+            <div class="lb-list">
+              <div class="lb-row"><div class="lb-num" style="color:var(--yellow)">1</div><div class="lb-av" style="background:rgba(255,200,0,.1)"><i class="ti ti-user-filled" style="color:var(--yellow-dk);font-size:17px"></i></div><div class="lb-name">karim_a</div><div class="lb-xp">1,820</div><span class="lb-ch up"><i class="ti ti-arrow-up" style="font-size:9px"></i>3</span></div>
+              <div class="lb-row"><div class="lb-num" style="color:var(--muted)">2</div><div class="lb-av" style="background:rgba(168,85,247,.1)"><i class="ti ti-user-filled" style="color:var(--purple);font-size:17px"></i></div><div class="lb-name">sofia_m</div><div class="lb-xp">1,540</div><span class="lb-ch eq"><i class="ti ti-minus" style="font-size:9px"></i></span></div>
+              <div class="lb-row"><div class="lb-num" style="color:var(--orange)">3</div><div class="lb-av" style="background:rgba(255,150,0,.1)"><i class="ti ti-user-filled" style="color:var(--orange);font-size:17px"></i></div><div class="lb-name">ali_k</div><div class="lb-xp">1,380</div><span class="lb-ch dn"><i class="ti ti-arrow-down" style="font-size:9px"></i>1</span></div>
+              <div class="lb-row"><div class="lb-num" style="color:var(--muted)">4</div><div class="lb-av" style="background:rgba(28,176,246,.1)"><i class="ti ti-user-filled" style="color:var(--blue);font-size:17px"></i></div><div class="lb-name">math_pro</div><div class="lb-xp">1,220</div><span class="lb-ch up"><i class="ti ti-arrow-up" style="font-size:9px"></i>2</span></div>
+              <div class="lb-row"><div class="lb-num" style="color:var(--muted)">5</div><div class="lb-av" style="background:rgba(20,184,166,.1)"><i class="ti ti-user-filled" style="color:var(--teal);font-size:17px"></i></div><div class="lb-name">nour_21</div><div class="lb-xp">1,100</div><span class="lb-ch eq"><i class="ti ti-minus" style="font-size:9px"></i></span></div>
+              <div class="zone-bar demo"><i class="ti ti-arrow-down"></i> <b>Demotion Zone</b> — Bottom 5 return to Bronze</div>
+              <div class="lb-row you"><div class="lb-num" style="color:var(--blue)">8</div><div class="lb-av" style="background:rgba(28,176,246,.1)"><i class="ti ti-user-filled" id="lbYouIcon" style="color:var(--blue);font-size:17px"></i></div><div class="lb-name" id="lbYouName">You</div><div class="lb-xp" style="color:var(--blue)">580</div><span class="lb-ch up"><i class="ti ti-arrow-up" style="font-size:9px"></i>2</span></div>
+            </div>
+          </div>
+          <div class="rpanel">
+            <div class="clay my-lg-card">
+              <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#C0C0C0,#888);box-shadow:0 5px 0 rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i class="ti ti-medal-2" style="font-size:32px;color:#fff"></i></div>
+              <div class="my-lg-name" style="color:#888">Silver League</div>
+              <div class="my-lg-rank">Rank 8 of 25</div>
+              <div class="lg-prog-track"><div class="lg-prog-fill" style="width:40%;background:linear-gradient(90deg,#C0C0C0,#888)"></div></div>
+              <div class="lg-prog-lbls"><span>0</span><span>Top 10 = Promoted</span></div>
+            </div>
+            <div class="all-lg-title">All Leagues</div>
+            <div class="mini-lg"><div class="mlg-ic"><i class="ti ti-medal" style="color:#CD7F32;font-size:18px"></i></div><span class="mlg-nm">Bronze</span><span class="mlg-tag" style="color:var(--green)"><i class="ti ti-check"></i></span></div>
+            <div class="mini-lg cur"><div class="mlg-ic"><i class="ti ti-medal-2" style="color:#888;font-size:18px"></i></div><span class="mlg-nm" style="color:#888">Silver</span><span class="mlg-tag" style="color:var(--blue)"><i class="ti ti-map-pin" style="font-size:11px"></i> You</span></div>
+            <div class="mini-lg"><div class="mlg-ic"><i class="ti ti-crown" style="color:var(--yellow-dk);font-size:18px"></i></div><span class="mlg-nm">Gold</span><span class="mlg-tag" style="color:var(--muted)"><i class="ti ti-lock"></i></span></div>
+            <div class="mini-lg"><div class="mlg-ic"><i class="ti ti-diamond" style="color:var(--blue);font-size:18px"></i></div><span class="mlg-nm">Sapphire</span><span class="mlg-tag" style="color:var(--muted)"><i class="ti ti-lock"></i></span></div>
+            <div class="mini-lg"><div class="mlg-ic"><i class="ti ti-diamond" style="color:var(--red);font-size:18px"></i></div><span class="mlg-nm">Ruby</span><span class="mlg-tag" style="color:var(--muted)"><i class="ti ti-lock"></i></span></div>
+            <div class="mini-lg"><div class="mlg-ic"><i class="ti ti-stars" style="color:var(--blue);font-size:18px"></i></div><span class="mlg-nm">Diamond</span><span class="mlg-tag" style="color:var(--muted)"><i class="ti ti-lock"></i></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ QUESTS ══ -->
+      <div class="page" id="page-quests">
+        <div class="page-body">
+          <div class="page-content">
+            <h2 style="font-family:var(--FH);font-size:clamp(18px,4vw,22px);margin-bottom:14px"><i class="ti ti-target" style="color:var(--blue)"></i> Quests</h2>
+            <div class="q-tabs">
+              <button class="q-tab active" onclick="switchQTab(this)">Daily</button>
+              <button class="q-tab" onclick="switchQTab(this)">Weekly</button>
+              <button class="q-tab" onclick="switchQTab(this)">Challenges</button>
+            </div>
+            <div class="quest-card">
+              <div class="qi-wrap" style="background:rgba(28,176,246,.1)"><i class="ti ti-bolt" style="font-size:22px;color:var(--blue)"></i></div>
+              <div class="qi-info"><div class="qi-name">Earn 50 XP</div><div class="qi-desc">Complete any lesson today</div><div class="qi-bar"><div class="qi-fill" style="width:48%;background:var(--blue)"></div></div></div>
+              <div class="qi-reward"><span class="qi-xp">+10 <i class="ti ti-diamond" style="font-size:10px"></i></span><span style="font-size:10px;font-weight:700;color:var(--muted)">24/50</span></div>
+            </div>
+            <div class="quest-card">
+              <div class="qi-wrap" style="background:rgba(255,150,0,.1)"><i class="ti ti-flame" style="font-size:22px;color:var(--orange)"></i></div>
+              <div class="qi-info"><div class="qi-name">Keep your streak</div><div class="qi-desc">Practice today to maintain</div><div class="qi-bar"><div class="qi-fill" style="width:100%;background:var(--orange)"></div></div></div>
+              <div class="qi-reward"><span class="qi-xp">+5 <i class="ti ti-diamond" style="font-size:10px"></i></span><i class="ti ti-circle-check-filled" style="color:var(--green);font-size:22px"></i></div>
+            </div>
+            <div class="quest-card done">
+              <div class="qi-wrap" style="background:rgba(88,204,2,.1)"><i class="ti ti-check" style="font-size:22px;color:var(--green)"></i></div>
+              <div class="qi-info"><div class="qi-name">Perfect score</div><div class="qi-desc">Score 100% on a lesson</div><div class="qi-bar"><div class="qi-fill" style="width:100%;background:var(--green)"></div></div></div>
+              <div class="qi-reward"><span class="qi-xp">+15 <i class="ti ti-diamond" style="font-size:10px"></i></span><i class="ti ti-circle-check-filled" style="color:var(--green);font-size:22px"></i></div>
+            </div>
+            <div class="quest-card">
+              <div class="qi-wrap" style="background:rgba(168,85,247,.1)"><i class="ti ti-calculator" style="font-size:22px;color:var(--purple)"></i></div>
+              <div class="qi-info"><div class="qi-name">Solve 10 problems</div><div class="qi-desc">Practice makes perfect</div><div class="qi-bar"><div class="qi-fill" style="width:30%;background:var(--purple)"></div></div></div>
+              <div class="qi-reward"><span class="qi-xp">+20 <i class="ti ti-diamond" style="font-size:10px"></i></span><span style="font-size:10px;font-weight:700;color:var(--muted)">3/10</span></div>
+            </div>
+            <div class="quest-card">
+              <div class="qi-wrap" style="background:rgba(20,184,166,.1)"><i class="ti ti-clock" style="font-size:22px;color:var(--teal)"></i></div>
+              <div class="qi-info"><div class="qi-name">Study <span id="goalMinQ">15</span> minutes</div><div class="qi-desc">Hit your daily time goal</div><div class="qi-bar"><div class="qi-fill" style="width:55%;background:var(--teal)"></div></div></div>
+              <div class="qi-reward"><span class="qi-xp">+25 <i class="ti ti-diamond" style="font-size:10px"></i></span><span style="font-size:10px;font-weight:700;color:var(--muted)">8/<span id="goalMinQ2">15</span></span></div>
+            </div>
+          </div>
+          <div class="rpanel">
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-diamond" style="color:var(--blue)"></i> Your Gems</div>
+              <div class="gem-display"><i class="ti ti-diamond gem-big" style="color:var(--blue);font-size:44px"></i><span class="gem-count">180</span></div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-align:center">Earn by completing quests</div>
+            </div>
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-calendar" style="color:var(--purple)"></i> This Week</div>
+              <div class="week-stats">
+                <div class="ws-item" style="background:var(--green-lo)"><div class="ws-num" style="color:var(--green)">4/7</div><div class="ws-lbl">Days active</div></div>
+                <div class="ws-item" style="background:var(--blue-lo)"><div class="ws-num" style="color:var(--blue)">18</div><div class="ws-lbl">Lessons</div></div>
+                <div class="ws-item" style="background:var(--orange-lo)"><div class="ws-num" style="color:var(--orange)">35</div><div class="ws-lbl">💎 earned</div></div>
+                <div class="ws-item" style="background:var(--purple-lo)"><div class="ws-num" style="color:var(--purple)">94%</div><div class="ws-lbl">Accuracy</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PROFILE ══ -->
+      <div class="page" id="page-profile">
+        <div class="page-body">
+          <div class="page-content">
+            <div class="prof-hero">
+              <div class="ph-av-wrap">
+                <div class="ph-av" id="profAv">
+                  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div class="ph-lv">LVL 12</div>
+              </div>
+              <div>
+                <div class="ph-name" id="profName">Ahmed</div>
+                <div class="ph-user" id="profUser">@ahmed · Joined today</div>
+                <div class="ph-badges">
+                  <span class="phb" id="profLevelBadge">Primary</span>
+                  <span class="phb" id="profGradeBadge">Grade 5</span>
+                  <span class="phb"><i class="ti ti-medal-2" style="font-size:11px"></i> Silver</span>
+                  <span class="phb"><i class="ti ti-flame" style="font-size:11px"></i> 12 Streak</span>
+                </div>
+              </div>
+            </div>
+            <div class="stats-grid">
+              <div class="clay sg"><i class="ti ti-flame" style="color:var(--orange)"></i><div class="sg-val" style="color:var(--orange)">12</div><div class="sg-lbl">Streak</div></div>
+              <div class="clay sg"><i class="ti ti-bolt" style="color:var(--blue)"></i><div class="sg-val" style="color:var(--blue)">3,420</div><div class="sg-lbl">Total XP</div></div>
+              <div class="clay sg"><i class="ti ti-books" style="color:var(--purple)"></i><div class="sg-val" style="color:var(--purple)">68</div><div class="sg-lbl">Lessons</div></div>
+              <div class="clay sg"><i class="ti ti-diamond" style="color:var(--teal)"></i><div class="sg-val" style="color:var(--teal)">180</div><div class="sg-lbl">Gems</div></div>
+            </div>
+            <h3 style="font-family:var(--FH);font-size:18px;margin-bottom:12px"><i class="ti ti-award" style="color:var(--yellow-dk)"></i> Achievements</h3>
+            <div class="ach-grid">
+              <div class="clay ach"><i class="ti ti-flame" style="color:var(--orange)"></i><div class="ach-nm">7-Day</div></div>
+              <div class="clay ach"><i class="ti ti-bolt" style="color:var(--blue)"></i><div class="ach-nm">1000 XP</div></div>
+              <div class="clay ach"><i class="ti ti-star" style="color:var(--yellow-dk)"></i><div class="ach-nm">Perfect Week</div></div>
+              <div class="clay ach"><i class="ti ti-trophy" style="color:var(--orange)"></i><div class="ach-nm">Silver League</div></div>
+              <div class="clay ach"><i class="ti ti-check" style="color:var(--green)"></i><div class="ach-nm">First 100%</div></div>
+              <div class="clay ach"><i class="ti ti-calculator" style="color:var(--purple)"></i><div class="ach-nm">50 Problems</div></div>
+              <div class="clay ach locked"><i class="ti ti-diamond" style="color:var(--blue)"></i><div class="ach-nm">Diamond League</div></div>
+              <div class="clay ach locked"><i class="ti ti-crown" style="color:var(--yellow-dk)"></i><div class="ach-nm">Top Scorer</div></div>
+            </div>
+            <h3 style="font-family:var(--FH);font-size:18px;margin:14px 0 10px"><i class="ti ti-calendar" style="color:var(--orange)"></i> May 2026</h3>
+            <div class="cal-wrap">
+              <div class="cal-month"><span>◀</span><span>May 2026</span><span>▶</span></div>
+              <div class="cal-headers"><div class="cal-h">M</div><div class="cal-h">T</div><div class="cal-h">W</div><div class="cal-h">T</div><div class="cal-h">F</div><div class="cal-h">S</div><div class="cal-h">S</div></div>
+              <div class="cal-days" id="calDays"></div>
+            </div>
+          </div>
+          <div class="rpanel">
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-chart-bar" style="color:var(--blue)"></i> This Month</div>
+              <div style="font-size:12px;font-weight:700;color:var(--muted);line-height:2.2">
+                Days practiced: <b style="color:var(--text)">13/13</b><br>
+                XP this month: <b style="color:var(--blue)">1,840</b><br>
+                Lessons done: <b style="color:var(--purple)">46</b><br>
+                Best streak: <b style="color:var(--orange)">12 <i class="ti ti-flame" style="font-size:12px"></i></b>
+              </div>
+            </div>
+            <div class="clay panel-card">
+              <div class="panel-title"><i class="ti ti-math" style="color:var(--blue)"></i> Subjects</div>
+              <div id="subjectsPanel" style="font-size:13px;font-weight:700;color:var(--muted)">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SHOP ══ -->
+      <div class="page" id="page-shop">
+        <div class="page-body">
+          <div class="shop-wrap">
+            <div class="shop-hdr">
+              <div class="shop-title"><i class="ti ti-diamond" style="color:var(--blue)"></i> Shop</div>
+              <div class="currencies">
+                <div class="curr"><i class="ti ti-diamond" style="color:var(--blue)"></i> 180</div>
+                <div class="curr"><i class="ti ti-heart" style="color:var(--red)"></i> 3</div>
+              </div>
+            </div>
+            <div class="shop-sec"><i class="ti ti-diamond" style="color:var(--blue)"></i> Get Gems</div>
+            <div class="shop-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="shop-card"><i class="ti ti-diamond" style="color:var(--blue)"></i><div class="shop-name">Small</div><div class="shop-desc">40 gems</div><button class="shop-price">$0.99</button></div>
+              <div class="shop-card best"><i class="ti ti-diamonds" style="color:var(--blue)"></i><div class="shop-name">Value</div><div class="shop-desc">200 gems · save 40%</div><button class="shop-price">$3.99</button></div>
+              <div class="shop-card"><i class="ti ti-stars" style="color:var(--purple)"></i><div class="shop-name">Mega</div><div class="shop-desc">1,000 gems</div><button class="shop-price">$9.99</button></div>
+            </div>
+            <div class="shop-sec"><i class="ti ti-heart" style="color:var(--red)"></i> Hearts</div>
+            <div class="shop-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="shop-card"><i class="ti ti-heart" style="color:var(--red)"></i><div class="shop-name">1 Heart</div><div class="shop-desc">Get back instantly</div><button class="shop-price"><i class="ti ti-diamond"></i> 50</button></div>
+              <div class="shop-card"><i class="ti ti-hearts" style="color:var(--red)"></i><div class="shop-name">Full Refill</div><div class="shop-desc">All 5 hearts at once</div><button class="shop-price"><i class="ti ti-diamond"></i> 350</button></div>
+              <div class="shop-card" style="background:linear-gradient(135deg,#FFFBEB,#FFF7E0);border:2px solid rgba(255,200,0,.18)"><i class="ti ti-infinity" style="color:var(--orange)"></i><div class="shop-name">Unlimited</div><div class="shop-desc">Requires Super Plan</div><button class="shop-price" style="background:var(--green);color:#fff;box-shadow:0 3px 0 var(--green-dk)">Get Super</button></div>
+            </div>
+            <div class="shop-sec"><i class="ti ti-shield" style="color:var(--purple)"></i> Power-Ups</div>
+            <div class="shop-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="shop-card"><i class="ti ti-snowflake" style="color:var(--blue)"></i><div class="shop-name">Streak Freeze</div><div class="shop-desc">Protect 1 missed day</div><button class="shop-price"><i class="ti ti-diamond"></i> 100</button></div>
+              <div class="shop-card"><i class="ti ti-rocket" style="color:var(--orange)"></i><div class="shop-name">XP Boost ×2</div><div class="shop-desc">Double XP for 15 min</div><button class="shop-price"><i class="ti ti-diamond"></i> 150</button></div>
+              <div class="shop-card"><i class="ti ti-bulb" style="color:var(--yellow-dk)"></i><div class="shop-name">Hint Pack</div><div class="shop-desc">10 problem hints</div><button class="shop-price"><i class="ti ti-diamond"></i> 80</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pages -->
+  </div><!-- /main-col -->
+
+</div><!-- /app -->
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <div class="bnav-items">
+    <div class="bn-item active" data-page="home"><i class="ti ti-home"></i><span class="bn-lbl">Home</span></div>
+    <div class="bn-item" data-page="learn"><i class="ti ti-books"></i><span class="bn-lbl">Learn</span></div>
+    <div class="bn-item" data-page="leagues"><i class="ti ti-trophy"></i><span class="bn-lbl">Leagues</span></div>
+    <div class="bn-item" data-page="quests"><i class="ti ti-target"></i><span class="bn-lbl">Quests</span><div class="bn-dot"></div></div>
+    <div class="bn-item" data-page="profile"><i class="ti ti-user"></i><span class="bn-lbl">Profile</span></div>
+    <div class="bn-item" data-page="shop"><i class="ti ti-diamond"></i><span class="bn-lbl">Shop</span></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+const state = {
+  level:'', grade:'', goal:'', name:'Ahmed', avatar:'A', avatarColor:'#1CB0F6',
+  goalMins:{casual:10,regular:15,serious:20,intense:30}
+};
+let currentObScreen = 0;
+const totalScreens = 6;
+
+/* ════════════════════════════════
+   CURRICULUM DATA
+════════════════════════════════ */
+const curriculum = {
+  primary: [
+    { name:'Numbers & Counting', color:'linear-gradient(135deg,#1CB0F6,#6366F1)', nodes:[
+      {icon:'<span class="math-sym">123</span>',label:'Count 1–10',done:true,crown:true},
+      {icon:'<span class="math-sym">456</span>',label:'Count 11–50',done:true,crown:true},
+      {icon:'<span class="math-sym">100</span>',label:'Count to 100',done:false,active:true},
+      {icon:'<i class="ti ti-arrows-sort"></i>',label:'Compare Numbers',done:false,locked:true},
+    ]},
+    { name:'Addition', color:'linear-gradient(135deg,#58CC02,#14B8A6)', nodes:[
+      {icon:'<span class="math-sym">+</span>',label:'Basic Addition',done:false,locked:true},
+      {icon:'<span class="math-sym big">+</span>',label:'Add to 20',done:false,locked:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Word Problems',done:false,locked:true},
+    ]},
+    { name:'Subtraction', color:'linear-gradient(135deg,#FF9600,#F59E0B)', nodes:[
+      {icon:'<span class="math-sym">−</span>',label:'Basic Subtract',done:false,locked:true},
+      {icon:'<i class="ti ti-minus"></i>',label:'Subtract to 20',done:false,locked:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Word Problems',done:false,locked:true},
+    ]},
+    { name:'Multiplication', color:'linear-gradient(135deg,#A855F7,#EC4899)', nodes:[
+      {icon:'<span class="math-sym">×</span>',label:'Times Tables',done:false,locked:true},
+      {icon:'<span class="math-sym">×</span>',label:'Multiply by 10',done:false,locked:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Mixed Practice',done:false,locked:true},
+    ]},
+    { name:'Division', color:'linear-gradient(135deg,#FF4B4B,#F472B6)', nodes:[
+      {icon:'<span class="math-sym">÷</span>',label:'Basic Division',done:true,crown:true},
+      {icon:'<span class="math-sym">÷</span>',label:'Remainders',done:true,crown:false},
+      {icon:'<span class="math-sym">÷</span>',label:'Long Division',done:false,active:true,xp:'+30XP'},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Word Problems',done:false,locked:true},
+      {icon:'<i class="ti ti-circle-check"></i>',label:'Mixed Review',done:false,locked:true},
+    ]},
+    { name:'Fractions', color:'linear-gradient(135deg,#14B8A6,#0EA5E9)', nodes:[
+      {icon:'<span class="math-sym">½</span>',label:'What is a Fraction?',done:false,locked:true},
+      {icon:'<span class="math-sym">¾</span>',label:'Compare Fractions',done:false,locked:true},
+      {icon:'<span class="math-sym">+</span>',label:'Add Fractions',done:false,locked:true},
+    ]},
+    { name:'Geometry', color:'linear-gradient(135deg,#6366F1,#8B5CF6)', nodes:[
+      {icon:'<i class="ti ti-triangle"></i>',label:'2D Shapes',done:false,locked:true},
+      {icon:'<i class="ti ti-square"></i>',label:'Area & Perimeter',done:false,locked:true},
+      {icon:'<i class="ti ti-3d-cube-sphere"></i>',label:'3D Shapes',done:false,locked:true},
+    ]},
+    { name:'Measurement', color:'linear-gradient(135deg,#F59E0B,#EF4444)', nodes:[
+      {icon:'<i class="ti ti-ruler"></i>',label:'Length',done:false,locked:true},
+      {icon:'<i class="ti ti-scale"></i>',label:'Weight',done:false,locked:true},
+      {icon:'<i class="ti ti-clock"></i>',label:'Time',done:false,locked:true},
+    ]},
+  ],
+  middle: [
+    { name:'Integers & Rational Numbers', color:'linear-gradient(135deg,#1CB0F6,#6366F1)', nodes:[
+      {icon:'<span class="math-sym">ℤ</span>',label:'Integers',done:true,crown:true},
+      {icon:'<span class="math-sym">ℚ</span>',label:'Rational Numbers',done:true,crown:true},
+      {icon:'<span class="math-sym">%</span>',label:'Percentages',done:false,active:true,xp:'+30XP'},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Word Problems',done:false,locked:true},
+    ]},
+    { name:'Ratios & Proportions', color:'linear-gradient(135deg,#58CC02,#14B8A6)', nodes:[
+      {icon:'<span class="math-sym">∶</span>',label:'Ratios',done:false,locked:true},
+      {icon:'<i class="ti ti-equal"></i>',label:'Proportions',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-line"></i>',label:'Unit Rate',done:false,locked:true},
+    ]},
+    { name:'Algebra Basics', color:'linear-gradient(135deg,#A855F7,#EC4899)', nodes:[
+      {icon:'<span class="math-sym">x</span>',label:'Variables',done:false,locked:true},
+      {icon:'<span class="math-sym">x+</span>',label:'Expressions',done:false,locked:true},
+      {icon:'<span class="math-sym">=</span>',label:'Equations',done:false,locked:true},
+      {icon:'<span class="math-sym">></span>',label:'Inequalities',done:false,locked:true},
+    ]},
+    { name:'Linear Equations', color:'linear-gradient(135deg,#FF9600,#EF4444)', nodes:[
+      {icon:'<span class="math-sym">y=</span>',label:'Slope',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-line"></i>',label:'Graphing',done:false,locked:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Systems',done:false,locked:true},
+    ]},
+    { name:'Geometry', color:'linear-gradient(135deg,#14B8A6,#6366F1)', nodes:[
+      {icon:'<i class="ti ti-angle"></i>',label:'Angles',done:false,locked:true},
+      {icon:'<i class="ti ti-triangle"></i>',label:'Triangles',done:false,locked:true},
+      {icon:'<i class="ti ti-circle"></i>',label:'Circles',done:false,locked:true},
+      {icon:'<i class="ti ti-3d-cube-sphere"></i>',label:'Volume',done:false,locked:true},
+    ]},
+    { name:'Statistics & Probability', color:'linear-gradient(135deg,#F59E0B,#A855F7)', nodes:[
+      {icon:'<i class="ti ti-chart-bar"></i>',label:'Data & Graphs',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-pie"></i>',label:'Mean/Median/Mode',done:false,locked:true},
+      {icon:'<i class="ti ti-dice"></i>',label:'Probability',done:false,locked:true},
+    ]},
+  ],
+  secondary: [
+    { name:'Advanced Algebra', color:'linear-gradient(135deg,#6366F1,#A855F7)', nodes:[
+      {icon:'<span class="math-sym">x²</span>',label:'Polynomials',done:true,crown:true},
+      {icon:'<span class="math-sym">√</span>',label:'Factoring',done:true,crown:true},
+      {icon:'<span class="math-sym">ax²</span>',label:'Quadratics',done:false,active:true,xp:'+40XP'},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Complex Numbers',done:false,locked:true},
+    ]},
+    { name:'Functions', color:'linear-gradient(135deg,#1CB0F6,#14B8A6)', nodes:[
+      {icon:'<span class="math-sym">f(x)</span>',label:'Functions',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-line"></i>',label:'Graphing',done:false,locked:true},
+      {icon:'<span class="math-sym">eˣ</span>',label:'Exponentials',done:false,locked:true},
+      {icon:'<span class="math-sym">ln</span>',label:'Logarithms',done:false,locked:true},
+    ]},
+    { name:'Trigonometry', color:'linear-gradient(135deg,#FF9600,#EF4444)', nodes:[
+      {icon:'<span class="math-sym">sin</span>',label:'Sine & Cosine',done:false,locked:true},
+      {icon:'<span class="math-sym">tan</span>',label:'Tangent',done:false,locked:true},
+      {icon:'<span class="math-sym">π</span>',label:'Unit Circle',done:false,locked:true},
+    ]},
+    { name:'Statistics', color:'linear-gradient(135deg,#14B8A6,#6366F1)', nodes:[
+      {icon:'<i class="ti ti-chart-bar"></i>',label:'Distributions',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-line"></i>',label:'Regression',done:false,locked:true},
+      {icon:'<i class="ti ti-dice"></i>',label:'Probability',done:false,locked:true},
+    ]},
+    { name:'Intro to Calculus', color:'linear-gradient(135deg,#A855F7,#EC4899)', nodes:[
+      {icon:'<span class="math-sym">lim</span>',label:'Limits',done:false,locked:true},
+      {icon:'<span class="math-sym">d/dx</span>',label:'Derivatives',done:false,locked:true},
+      {icon:'<span class="math-sym">∫</span>',label:'Integrals',done:false,locked:true},
+    ]},
+  ],
+  university: [
+    { name:'Calculus I', color:'linear-gradient(135deg,#6366F1,#1CB0F6)', nodes:[
+      {icon:'<span class="math-sym">lim</span>',label:'Limits',done:true,crown:true},
+      {icon:'<span class="math-sym">d/dx</span>',label:'Derivatives',done:true,crown:true},
+      {icon:'<span class="math-sym">∫</span>',label:'Integration',done:false,active:true,xp:'+50XP'},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Applications',done:false,locked:true},
+    ]},
+    { name:'Calculus II', color:'linear-gradient(135deg,#A855F7,#EC4899)', nodes:[
+      {icon:'<span class="math-sym">∬</span>',label:'Multi-Variable',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-line"></i>',label:'Series',done:false,locked:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Power Series',done:false,locked:true},
+    ]},
+    { name:'Linear Algebra', color:'linear-gradient(135deg,#14B8A6,#6366F1)', nodes:[
+      {icon:'<span class="math-sym">[A]</span>',label:'Matrices',done:false,locked:true},
+      {icon:'<span class="math-sym">det</span>',label:'Determinants',done:false,locked:true},
+      {icon:'<span class="math-sym">λ</span>',label:'Eigenvalues',done:false,locked:true},
+    ]},
+    { name:'Differential Equations', color:'linear-gradient(135deg,#FF9600,#EF4444)', nodes:[
+      {icon:'<span class="math-sym">dy/dx</span>',label:'First Order',done:false,locked:true},
+      {icon:'<span class="math-sym">d²y</span>',label:'Second Order',done:false,locked:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Systems',done:false,locked:true},
+    ]},
+    { name:'Statistics & Probability', color:'linear-gradient(135deg,#F59E0B,#A855F7)', nodes:[
+      {icon:'<i class="ti ti-chart-bar"></i>',label:'Distributions',done:false,locked:true},
+      {icon:'<i class="ti ti-chart-pie"></i>',label:'Inference',done:false,locked:true},
+      {icon:'<i class="ti ti-dice"></i>',label:'Stochastic Processes',done:false,locked:true},
+    ]},
+  ],
+  teacher: [
+    { name:'Curriculum Design', color:'linear-gradient(135deg,#14B8A6,#6366F1)', nodes:[
+      {icon:'<i class="ti ti-books"></i>',label:'Lesson Planning',done:true,crown:true},
+      {icon:'<i class="ti ti-chalkboard"></i>',label:'Teaching Methods',done:false,active:true},
+      {icon:'<i class="ti ti-chart-bar"></i>',label:'Assessment',done:false,locked:true},
+    ]},
+  ],
+  parent: [
+    { name:'Primary Math Support', color:'linear-gradient(135deg,#F472B6,#A855F7)', nodes:[
+      {icon:'<span class="math-sym">123</span>',label:'Number Help',done:true,crown:true},
+      {icon:'<span class="math-sym">+−</span>',label:'Operations',done:false,active:true},
+      {icon:'<i class="ti ti-calculator"></i>',label:'Practice Tips',done:false,locked:true},
+    ]},
+  ],
+};
+
+const gradesByLevel = {
+  primary:   [{g:'1',l:'Grade 1'},{g:'2',l:'Grade 2'},{g:'3',l:'Grade 3'},{g:'4',l:'Grade 4'},{g:'5',l:'Grade 5'},{g:'6',l:'Grade 6'}],
+  middle:    [{g:'7',l:'Grade 7'},{g:'8',l:'Grade 8'},{g:'9',l:'Grade 9'}],
+  secondary: [{g:'10',l:'Grade 10'},{g:'11',l:'Grade 11'},{g:'12',l:'Grade 12'}],
+  university:[{g:'1',l:'Year 1'},{g:'2',l:'Year 2'},{g:'3',l:'Year 3'},{g:'4',l:'Year 4'}],
+  teacher:   [{g:'1',l:'Elementary'},{g:'2',l:'Middle Sch.'},{g:'3',l:'High School'}],
+  parent:    [{g:'1',l:'Grade 1-2'},{g:'2',l:'Grade 3-4'},{g:'3',l:'Grade 5-6'}],
+};
+
+const goalLabels = {casual:'10 min',regular:'15 min',serious:'20 min',intense:'30 min'};
+const levelLabels = {primary:'Primary',middle:'Middle',secondary:'Secondary',university:'University',teacher:'Teacher',parent:'Parent'};
+
+/* ════════════════════════════════
+   ONBOARDING LOGIC
+════════════════════════════════ */
+function obNext(){
+  if(currentObScreen<5){
+    showObScreen(currentObScreen+1);
+  }
+}
+function obBack(){
+  if(currentObScreen>0) showObScreen(currentObScreen-1);
+}
+function showObScreen(n){
+  const cur = document.getElementById('ob'+currentObScreen);
+  cur.classList.remove('active');
+  cur.classList.add('out');
+  setTimeout(()=>cur.classList.remove('out'),350);
+  currentObScreen = n;
+  const next = document.getElementById('ob'+n);
+  next.classList.add('active');
+  document.getElementById('obProgress').style.width = (n/(totalScreens-1)*100)+'%';
+  if(n===5) fillReadyScreen();
+}
+function selectLevel(card){
+  document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.level = card.dataset.level;
+  const btn = document.getElementById('ob1-next');
+  btn.style.opacity='1';btn.style.pointerEvents='all';
+  buildGradeGrid();
+}
+function buildGradeGrid(){
+  const grid = document.getElementById('gradeGrid');
+  grid.innerHTML='';
+  const grades = gradesByLevel[state.level]||[];
+  grades.forEach(g=>{
+    const btn = document.createElement('div');
+    btn.className='grade-btn';
+    btn.dataset.grade=g.g;
+    btn.innerHTML=`<span class="gb-grade">${g.l}</span>`;
+    btn.onclick=()=>selectGrade(btn);
+    grid.appendChild(btn);
+  });
+}
+function selectGrade(btn){
+  document.querySelectorAll('.grade-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.grade = btn.dataset.grade + ' — ' + btn.querySelector('.gb-grade').textContent;
+  const nb = document.getElementById('ob2-next');
+  nb.style.opacity='1';nb.style.pointerEvents='all';
+}
+function selectGoal(item){
+  document.querySelectorAll('.goal-item').forEach(i=>i.classList.remove('selected'));
+  item.classList.add('selected');
+  state.goal = item.dataset.goal;
+  const nb = document.getElementById('ob3-next');
+  nb.style.opacity='1';nb.style.pointerEvents='all';
+}
+function selectAv(btn){
+  document.querySelectorAll('.av-btn').forEach(b=>{
+    b.classList.remove('selected');
+    b.style.background='';
+    b.style.borderColor='';
+  });
+  btn.classList.add('selected');
+  const col = btn.dataset.color||'#1CB0F6';
+  btn.style.background = col+'20';
+  btn.style.borderColor = col;
+  state.avatar = btn.dataset.av;
+  state.avatarColor = col;
+}
+function checkName(){
+  const v = document.getElementById('nameInput').value.trim();
+  state.name = v||'Student';
+  const nb = document.getElementById('ob4-next');
+  if(v.length>0){nb.style.opacity='1';nb.style.pointerEvents='all';}
+  else{nb.style.opacity='.4';nb.style.pointerEvents='none';}
+}
+function fillReadyScreen(){
+  const n = state.name||'Student';
+  document.getElementById('readyName').textContent = n;
+  document.getElementById('rcLevel').textContent = levelLabels[state.level]||'Primary';
+  document.getElementById('rcGrade').textContent = (state.grade||'Grade 5').split('—').pop().trim();
+  document.getElementById('rcGoal').textContent = goalLabels[state.goal]||'15 min';
+}
+function launchApp(){
+  document.getElementById('onboarding').style.display='none';
+  const app = document.getElementById('app');
+  app.classList.add('visible');
+  setupApp();
+  buildLearnPage();
+  buildCalendar();
+  adjustPadding();
+}
+function setupApp(){
+  const n = state.name||'Student';
+  const gradeStr = (state.grade||'Grade 5').split('—').pop().trim();
+  // Greet
+  document.getElementById('homeGreet').textContent = `Good morning, ${n}! 👋`;
+  document.getElementById('profName').textContent = n;
+  document.getElementById('profUser').textContent = `@${n.toLowerCase().replace(/ /g,'_')} · Joined today`;
+  // Update profile avatar with selected icon
+  const profAv = document.getElementById('profAv');
+  const avatarSVGs = {
+    A: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    B: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>`,
+    C: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>`,
+    D: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    E: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    F: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>`,
+    G: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21a9 9 0 0 1 18 0"/></svg>`,
+    H: `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7.5-4-5-4 5z"/></svg>`,
+  };
+  if(profAv){
+    profAv.innerHTML = avatarSVGs[state.avatar] || avatarSVGs['A'];
+    profAv.style.background = (state.avatarColor||'#1CB0F6')+'44';
+  }
+  document.getElementById('profLevelBadge').textContent = levelLabels[state.level]||'Primary';
+  document.getElementById('profGradeBadge').textContent = gradeStr;
+  document.getElementById('tbGrade').textContent = gradeStr;
+  document.getElementById('tbSubject').textContent = 'Mathematics';
+  document.getElementById('lbYouName').textContent = n;
+  // Goals
+  const mins = state.goalMins[state.goal]||15;
+  document.querySelectorAll('#goalMinQ,#goalMinQ2').forEach(el=>el.textContent=mins);
+  // Subjects panel
+  const units = (curriculum[state.level]||curriculum.primary);
+  document.getElementById('subjectsPanel').innerHTML = units.slice(0,4).map(u=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>
+      <span style="font-size:12px">${u.name}</span>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════
+   BUILD LEARN PAGE
+════════════════════════════════ */
+function buildLearnPage(){
+  const wrap = document.getElementById('learnWrap');
+  wrap.innerHTML='';
+  const lvl = state.level||'primary';
+  const units = curriculum[lvl]||curriculum.primary;
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className='learn-hdr';
+  hdr.innerHTML=`
+    <div class="lhdr-icon"><i class="ti ti-math"></i></div>
+    <div class="lhdr-info">
+      <div class="lhdr-name">Mathematics</div>
+      <div class="lhdr-sub">${levelLabels[lvl]} · ${units.length} units</div>
+      <div class="lhdr-bar"><div class="lhdr-fill"></div></div>
+    </div>`;
+  wrap.appendChild(hdr);
+
+  const offsets = ['','right','left','','right','left','','right','left'];
+  units.forEach((unit,ui)=>{
+    // Unit banner
+    const banner = document.createElement('div');
+    banner.className='unit-banner';
+    banner.style.background=unit.color;
+    banner.innerHTML=`
+      <div class="ub-l">
+        <div class="ub-sec">UNIT ${ui+1}</div>
+        <div class="ub-name">${unit.name}</div>
+      </div>
+      <button class="clay-btn ub-guide"><i class="ti ti-book"></i> Guide</button>`;
+    wrap.appendChild(banner);
+
+    // Path col
+    const col = document.createElement('div');
+    col.className='path-col';
+    unit.nodes.forEach((node,ni)=>{
+      const pnode = document.createElement('div');
+      const off = offsets[(ui*3+ni)%offsets.length];
+      pnode.className='pnode '+(off);
+      let cls = 'pnode-btn';
+      if(node.active) cls+=' active';
+      else if(node.done) cls+=' done';
+      else if(node.locked) cls+=' locked';
+      // Extract color from gradient
+      const colors=['#1CB0F6','#58CC02','#A855F7','#FF9600','#FF4B4B','#14B8A6','#6366F1','#F59E0B'];
+      const bg = colors[ui%colors.length];
+      const bgs = {
+        '#1CB0F6':'#0A91D1','#58CC02':'#46A302','#A855F7':'#7C3AED',
+        '#FF9600':'#CC7800','#FF4B4B':'#CC3B3B','#14B8A6':'#0F9488',
+        '#6366F1':'#4F46E5','#F59E0B':'#D97706'
+      };
+      const shadow = bgs[bg]||'rgba(0,0,0,.2)';
+      pnode.innerHTML=`
+        <div class="${cls}" style="background:${node.locked?'#CBD5E1':''+bg};box-shadow:0 5px 0 ${node.locked?'#9CA3AF':shadow}">
+          ${node.icon}
+          ${node.crown?'<span class="pnode-crown"><i class="ti ti-crown" style="font-size:12px;color:var(--yellow)"></i></span>':''}
+          ${node.xp?`<span class="pnode-xp">${node.xp}</span>`:''}
+        </div>
+        <span class="pnode-label" style="${node.active?'color:var(--blue);font-weight:900':''}">${node.label}${node.active?' ← YOU':''}</span>`;
+      col.appendChild(pnode);
+    });
+    wrap.appendChild(col);
+  });
+}
+
+/* ════════════════════════════════
+   NAVIGATION
+════════════════════════════════ */
+function navigate(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.s-nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);
+  if(pg){pg.classList.add('active');pg.scrollTop=0;}
+  document.querySelectorAll(`[data-page="${id}"]`).forEach(n=>n.classList.add('active'));
+}
+document.querySelectorAll('.s-nav-item,.bn-item').forEach(item=>{
+  item.addEventListener('click',()=>navigate(item.dataset.page));
+});
+
+/* ════════════════════════════════
+   CALENDAR
+════════════════════════════════ */
+function buildCalendar(){
+  const cal=document.getElementById('calDays');
+  if(!cal)return;
+  const offset=3;
+  for(let i=0;i<offset;i++){const d=document.createElement('div');d.className='cal-d empty';cal.appendChild(d);}
+  for(let d=1;d<=31;d++){
+    const el=document.createElement('div');
+    if(d===13) el.className='cal-d today';
+    else if(d<13) el.className='cal-d done';
+    else el.className='cal-d miss';
+    el.textContent=d;
+    cal.appendChild(el);
+  }
+}
+
+/* ════════════════════════════════
+   QUEST TABS
+════════════════════════════════ */
+function switchQTab(tab){
+  document.querySelectorAll('.q-tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+}
+document.querySelectorAll('.lg-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.lg-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+/* ════════════════════════════════
+   RESPONSIVE PADDING
+════════════════════════════════ */
+function adjustPadding(){
+  const mob=window.innerWidth<=768;
+  document.querySelectorAll('.page').forEach(p=>p.style.paddingBottom=mob?'74px':'0');
+}
+adjustPadding();
+/* Check if Tabler font loaded, use text fallbacks if not */
+function checkIconFont(){
+  const test = document.createElement('i');
+  test.className = 'ti ti-home';
+  test.style.cssText = 'position:absolute;visibility:hidden;font-size:20px';
+  document.body.appendChild(test);
+  const w = test.getBoundingClientRect().width;
+  document.body.removeChild(test);
+  if(w === 0){
+    // Font not loaded - replace icon text labels with text
+    document.querySelectorAll('.bn-lbl').forEach((el,i)=>{
+      const labels=['Home','Learn','Leagues','Quests','Profile','Shop'];
+      if(labels[i]) el.textContent = labels[i];
+    });
+    document.querySelectorAll('.lc-icon').forEach(el=>{
+      const icons=['📚','📖','🔢','🏫','✏️','👪'];
+      const idx = [...el.closest('.level-grid').children].indexOf(el.closest('.level-card'));
+      el.innerHTML = `<span style="font-size:28px">${icons[idx]||'📚'}</span>`;
+    });
+  }
+}
+setTimeout(checkIconFont, 800);
+</script>
+</body>
+</html>
